@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMSI & JSO Level 4 - Simulasi & AI Tutor Interaktif</title>
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        [v-cloak] { display: none !important; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(10px); }
+        .clean-scroll::-webkit-scrollbar { width: 6px; }
+        .clean-scroll::-webkit-scrollbar-track { background: transparent; }
+        .clean-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .keflex-label { font-family: 'Arial', sans-serif; background-color: #fff; color: #000; }
+        .barcode-stripes { background-image: repeating-linear-gradient(90deg, #000, #000 2px, transparent 2px, transparent 4px, #000 4px, #000 5px, transparent 5px, transparent 8px); }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen">
+    <div id="app" v-cloak class="min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8">
+        <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col min-h-[85vh]">
+            
+            <!-- Header Navigasi -->
+            <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-900 text-white p-6 md:p-8 text-center relative shrink-0">
+                <h1 class="text-2xl md:text-3xl font-extrabold relative z-10 tracking-tight">
+                    <i class="fas fa-medal text-yellow-400 mr-2"></i> KMSI Olimpiad Champion Level 4
+                </h1>
+                <p class="text-indigo-100 text-sm md:text-base mt-2 font-medium relative z-10">Latihan Terpandu, Simulasi, dan Evaluasi Reflektif</p>
+            </div>
+
+            <div class="p-6 md:p-8 flex-1 flex flex-col">
+                <transition name="fade" mode="out-in">
+                    
+                    <!-- MENU UTAMA -->
+                    <div v-if="phase === 'home'" key="home" class="flex-1 flex flex-col justify-center items-center text-center py-4">
+                        <div class="max-w-2xl w-full">
+                            <div class="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-5xl mx-auto shadow-inner mb-6">
+                                <i class="fas fa-book-reader"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-900 mb-3">Persiapan Olimpiade Terstruktur</h2>
+                            <p class="text-slate-600 mb-8 text-sm leading-relaxed">
+                                Selesaikan <strong class="text-blue-600">Mode 1: Latihan Instan (Soal 1 & 2)</strong> terlebih dahulu untuk mempelajari materi. Setelah itu, akses ke <strong class="text-amber-600">Mode 2: Simulasi Berwaktu (Soal 3 & 4)</strong> akan terbuka[cite: 71].
+                            </p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+                                <div @click="startMode1" class="bg-sky-50 border-2 border-sky-200 hover:border-sky-400 p-6 rounded-2xl cursor-pointer transition-all shadow-sm group">
+                                    <div class="text-sky-600 text-3xl mb-3"><i class="fas fa-bolt"></i></div>
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1">Mode 1: Latihan</h3>
+                                    <p class="text-xs text-slate-600 leading-relaxed">Soal 1 & 2[cite: 69]. Instant Feedback. Didampingi AI Tutor Olimpiad[cite: 71].</p>
+                                </div>
+
+                                <div @click="mode2Unlocked ? startMode2Intro() : null" 
+                                     :class="['p-6 rounded-2xl border-2 transition-all shadow-sm', mode2Unlocked ? 'bg-amber-50 border-amber-200 hover:border-amber-400 cursor-pointer' : 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed']">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div :class="mode2Unlocked ? 'text-amber-600 text-3xl' : 'text-slate-400 text-3xl'"><i class="fas fa-stopwatch"></i></div>
+                                        <i v-if="!mode2Unlocked" class="fas fa-lock text-slate-400 text-xl bg-slate-200 p-2 rounded-full"></i>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1">Mode 2: Simulasi</h3>
+                                    <p class="text-xs text-slate-600 leading-relaxed">Soal 3 & 4[cite: 69]. Dikerjakan dengan Timer[cite: 69, 71]. Evaluasi & Retry di akhir[cite: 69, 71].</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODE 1 LATIHAN -->
+                    <div v-else-if="phase === 'mode1'" key="mode1" class="space-y-6 flex-1 flex flex-col">
+                        <div class="flex flex-wrap justify-between items-center bg-slate-50 px-5 py-4 rounded-xl border border-slate-200 gap-4">
+                            <span class="text-xs sm:text-sm font-extrabold text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                <i class="fas fa-bolt"></i> Latihan Terpandu (Soal 1 & 2)[cite: 69, 71]
+                            </span>
+                            <div class="flex items-center gap-3">
+                                <button @click="openAITutor" class="text-xs font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-sm border border-indigo-200">
+                                    <i class="fas fa-robot text-sm"></i> AI Tutor Olympiad[cite: 71]
+                                </button>
+                                <span class="text-sm font-bold text-slate-600 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                                    Soal {{ currentMode1Index + 1 }} / 2
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white border-2 border-slate-200 p-5 sm:p-8 rounded-2xl shadow-sm">
+                            <div class="mb-6 pb-6 border-b-2 border-slate-100">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 block"><i class="fas fa-paperclip mr-1"></i> Teks / Visual Rujukan Asli:</span>
+                                
+                                <div v-if="currentQ.id === 2" class="w-full flex justify-center">
+                                    <div class="border-[3px] border-black p-4 bg-white text-black keflex-label flex flex-col sm:flex-row gap-4 justify-between items-stretch text-[11px] leading-tight w-full max-w-4xl shadow-sm">
+                                        <div class="flex-1 flex flex-col gap-1 w-full border-b-[3px] sm:border-b-0 sm:border-r-[3px] border-black pb-4 sm:pr-4">
+                                            <div class="h-10 w-full barcode-stripes mb-2 border border-black"></div>
+                                            <p class="font-bold">Manufactured by<br>DISTA PRODUCTS CO.</p>
+                                            <p>a Division of Eli Lilly Industries, Inc.<br>Carolina, Puerto Rico 00630</p>
+                                        </div>
+                                        <div class="flex-[1.5] text-center w-full flex flex-col justify-center items-center">
+                                            <p class="font-bold tracking-wider text-xs">NDC 0777-0869-02 <span class="border-2 border-black rounded-full px-1">R<sub>x</sub></span></p>
+                                            <p class="font-bold text-xs">100 PULVULES® No. 402</p>
+                                            <h1 class="text-3xl sm:text-4xl font-black mt-1 mb-1">KEFLEX®</h1>
+                                            <h3 class="font-bold text-xl mt-1 mb-2">250 mg</h3>
+                                        </div>
+                                        <div class="flex-1 w-full pt-4 sm:pt-0 sm:pl-4 border-t-[3px] sm:border-t-0 sm:border-l-[3px] border-black flex flex-col justify-center">
+                                            <p><b>Usual Adult Dose</b>—One PULVULE every 6 hours...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div v-if="currentQ.id === 1" class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                                    <h4 class="font-bold text-slate-800 mb-4 text-lg border-b border-slate-200 pb-2">Walt Disney</h4>
+                                    <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed font-serif text-justify">{{ currentQ.context }}</p>
+                                </div>
+                            </div>
+
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-900 leading-snug mb-5">
+                                <span class="text-blue-600 mr-1">{{ currentQ.originalNumber }}.</span> {{ currentQ.text }}
+                            </h3>
+
+                            <div class="space-y-3">
+                                <button v-for="(opt, idx) in currentQ.options" :key="idx" 
+                                    @click="!mode1Checked ? mode1Answers[currentQ.id] = idx : null"
+                                    :disabled="mode1Checked"
+                                    :class="[
+                                        'w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-4 cursor-pointer',
+                                        !mode1Checked && mode1Answers[currentQ.id] === idx ? 'border-sky-500 bg-sky-50 text-sky-900 font-bold' : '',
+                                        !mode1Checked && mode1Answers[currentQ.id] !== idx ? 'border-slate-200 hover:border-sky-300 text-slate-700 bg-white' : '',
+                                        mode1Checked && idx === currentQ.correct ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold' : '',
+                                        mode1Checked && mode1Answers[currentQ.id] === idx && idx !== currentQ.correct ? 'border-rose-500 bg-rose-50 text-rose-900 line-through' : '',
+                                        mode1Checked && mode1Answers[currentQ.id] !== idx && idx !== currentQ.correct ? 'opacity-40 border-slate-200 bg-slate-50' : ''
+                                    ]">
+                                    <span class="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold border-2 mt-0.5"
+                                        :class="mode1Checked && idx === currentQ.correct ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-slate-500'">
+                                        {{ String.fromCharCode(97 + idx) }}.
+                                    </span>
+                                    <span class="pt-0.5 leading-tight">{{ opt }}</span>
+                                </button>
+                            </div>
+
+                            <div v-if="mode1Checked" class="mt-6 p-5 rounded-2xl border animate-fade-in" 
+                                :class="mode1Answers[currentQ.id] === currentQ.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'">
+                                <div class="flex items-center gap-2 font-bold mb-3 text-base">
+                                    <i :class="mode1Answers[currentQ.id] === currentQ.correct ? 'fas fa-check-circle text-emerald-500 text-2xl' : 'fas fa-times-circle text-rose-500 text-2xl'"></i>
+                                    {{ mode1Answers[currentQ.id] === currentQ.correct ? 'Jawaban Benar!' : 'Jawaban Kurang Tepat' }}
+                                </div>
+                                <div class="bg-white p-4 rounded-xl border shadow-sm text-sm text-slate-700 leading-relaxed">
+                                    <strong class="text-slate-900 block mb-1">Pembahasan:</strong>
+                                    {{ currentQ.theory }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button v-if="!mode1Checked" @click="checkMode1" :disabled="mode1Answers[currentQ.id] === undefined" 
+                                class="bg-blue-600 disabled:bg-slate-300 text-white font-bold py-3.5 px-8 rounded-xl shadow-md hover:bg-blue-700 cursor-pointer">
+                                Periksa Jawaban
+                            </button>
+                            <button v-if="mode1Checked" @click="nextMode1" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-8 rounded-xl shadow-md flex items-center gap-3 cursor-pointer">
+                                {{ currentMode1Index < 1 ? 'Soal Berikutnya' : 'Selesaikan Latihan' }} <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MODE 2 INTRO -->
+                    <div v-else-if="phase === 'mode2_intro'" key="mode2_intro" class="flex-1 flex flex-col justify-center text-center py-8">
+                        <div class="bg-amber-100 w-28 h-28 mx-auto rounded-full flex items-center justify-center mb-6 text-amber-500 text-5xl shadow-inner border border-amber-200">
+                            <i class="fas fa-stopwatch"></i>
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-slate-900 mb-4">Mode Simulasi Ujian Asli</h2>
+                        <p class="text-slate-600 mb-8 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
+                            Kamu akan menghadapi 2 soal (Fable & Tenses) dengan batas waktu <b>2 Menit</b>[cite: 69, 71]. AI Tutor dimatikan. Evaluasi dan sesi perbaikan dilakukan di akhir[cite: 69, 71].
+                        </p>
+                        <button @click="startMode2" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-12 rounded-full shadow-lg flex items-center justify-center mx-auto gap-3 cursor-pointer text-lg">
+                            Mulai Waktu <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+
+                    <!-- MODE 2 SIMULASI -->
+                    <div v-else-if="phase === 'mode2'" key="mode2" class="space-y-8 flex-1 flex flex-col">
+                        <div class="flex justify-between items-center bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-xl sticky top-4 z-10 border border-slate-700">
+                            <span class="text-xs sm:text-sm font-extrabold uppercase tracking-widest flex items-center gap-2">
+                                <i class="fas fa-flag-checkered text-amber-400"></i> Ujian Simulasi (Soal 3 & 4)[cite: 69]
+                            </span>
+                            <span class="text-xl font-mono font-black px-4 py-1.5 rounded-lg bg-slate-800 border border-slate-600 text-emerald-400">
+                                <i class="far fa-clock mr-1"></i> {{ formattedTimer }}
+                            </span>
+                        </div>
+
+                        <div v-for="q in mode2Questions" :key="q.id" class="bg-white p-6 sm:p-8 rounded-3xl border-2 border-slate-200 shadow-sm space-y-5">
+                            <div v-if="q.context" class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-4">
+                                <h4 class="font-bold text-slate-800 mb-3 text-base border-b border-slate-200 pb-2"><i class="fas fa-book mr-2"></i>The Greedy Dog</h4>
+                                <p class="text-sm text-slate-700 whitespace-pre-line leading-relaxed font-serif text-justify">{{ q.context }}</p>
+                            </div>
+
+                            <div class="flex gap-3 items-start">
+                                <span class="text-xl font-black text-amber-500 mt-1">{{ q.originalNumber }}.</span>
+                                <h3 class="text-lg font-bold text-slate-900 leading-relaxed">{{ q.text }}</h3>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-3 sm:pl-9">
+                                <button v-for="(opt, idx) in q.options" :key="idx" 
+                                    @click="mode2Answers[q.id] = idx"
+                                    :class="[
+                                        'w-full text-left p-4 rounded-xl border-2 transition-all text-sm flex items-start gap-4 cursor-pointer',
+                                        mode2Answers[q.id] === idx ? 'border-sky-500 bg-sky-50 text-sky-900 font-bold shadow-md' : 'border-slate-200 hover:border-sky-200 text-slate-700 bg-white'
+                                    ]">
+                                    <span class="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold border-2 mt-0.5"
+                                        :class="mode2Answers[q.id] === idx ? 'border-sky-500 bg-sky-500 text-white' : 'border-slate-300 text-slate-500'">
+                                        {{ String.fromCharCode(97 + idx) }}.
+                                    </span>
+                                    <span class="pt-0.5 leading-tight">{{ opt }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center pt-6 pb-4">
+                            <button @click="submitMode2" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-12 rounded-full shadow-xl cursor-pointer text-lg">
+                                Kumpulkan Jawaban <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FASE EVALUASI & REFLEKSI -->
+                    <div v-else-if="phase === 'eval'" key="eval" class="space-y-6">
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 bg-gradient-to-br from-rose-50 to-orange-50 p-6 sm:p-8 rounded-3xl border border-rose-100 text-center sm:text-left">
+                            <div class="w-16 h-16 bg-white border-4 border-rose-200 text-rose-500 rounded-full flex items-center justify-center text-3xl shrink-0 shadow-sm mx-auto sm:mx-0">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-slate-900 text-2xl mb-2">Evaluasi Hasil Simulasi</h3>
+                                <p class="text-slate-700 text-sm sm:text-base leading-relaxed">
+                                    Ada <strong class="text-rose-600 text-lg mx-1">{{ wrongMode2Qs.length }} soal</strong> yang masih keliru[cite: 69, 71]. Pelajari teorinya di bawah ini[cite: 69, 71].
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div v-for="q in wrongMode2Qs" :key="q.id" class="bg-white border-2 border-slate-200 p-6 rounded-3xl shadow-sm relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-2 h-full bg-rose-400"></div>
+                                <h4 class="font-bold text-slate-900 text-base mb-3 flex items-start gap-3">
+                                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs shrink-0 border">Soal {{ q.originalNumber }}</span>
+                                    <span>{{ q.text }}</span>
+                                </h4>
+                                <div class="text-sm text-rose-800 bg-rose-50 p-4 rounded-xl mb-4 border border-rose-100">
+                                    <strong class="block mb-1 text-rose-900"><i class="fas fa-times-circle mr-1"></i> Jawabanmu:</strong> 
+                                    <span class="line-through">{{ mode2Answers[q.id] !== undefined ? q.options[mode2Answers[q.id]] : 'Kosong' }}</span>
+                                    <hr class="my-2 border-rose-200">
+                                    <strong class="block mb-1 text-rose-900"><i class="fas fa-search mr-1"></i> Analisis:</strong> 
+                                    {{ mode2Answers[q.id] !== undefined ? q.whyWrong[mode2Answers[q.id]] : 'Terlewat.' }}
+                                </div>
+                                <div class="text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border">
+                                    <strong class="text-indigo-700 text-base mb-2 block"><i class="fas fa-book-open mr-1"></i> Teori Singkat[cite: 69, 71]:</strong>
+                                    <span>{{ q.theory }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Jurnal Refleksi -->
+                        <div class="bg-white p-6 sm:p-8 rounded-3xl border-2 border-indigo-100 shadow-md mt-8">
+                            <label class="block font-extrabold text-slate-900 mb-3 text-xl">
+                                <i class="fas fa-pen-nib text-indigo-500 mr-2"></i> Jurnal Refleksi
+                            </label>
+                            <p class="text-sm text-slate-600 mb-5 leading-relaxed">
+                                Tuliskan secara jujur mengapa kamu bisa keliru dalam menjawab soal di atas[cite: 69, 71]?
+                            </p>
+                            <textarea v-model="reflectionText" rows="3" 
+                                class="w-full p-4 border-2 border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:outline-none text-sm text-slate-800 resize-none shadow-inner" 
+                                placeholder="Ketikan refleksimu di sini..."></textarea>
+                            
+                            <div class="flex justify-end mt-5">
+                                <button @click="startRetry" :disabled="reflectionText.trim().length < 5" 
+                                    class="bg-indigo-600 disabled:bg-slate-300 text-white font-bold py-3.5 px-8 rounded-xl shadow-md hover:bg-indigo-700 cursor-pointer flex items-center gap-2">
+                                    Lanjut ke Fase Perbaikan (Retry)[cite: 69, 71] <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FASE PERBAIKAN (RETRY) -->
+                    <div v-else-if="phase === 'retry'" key="retry" class="space-y-6 flex-1 flex flex-col">
+                        <div class="flex flex-wrap items-center justify-between bg-indigo-50 px-5 py-4 rounded-2xl border border-indigo-100 gap-4">
+                            <div class="flex items-center text-indigo-800 font-extrabold gap-2 text-sm">
+                                <i class="fas fa-wrench text-xl"></i> Fase Perbaikan Mandiri[cite: 69, 71]
+                            </div>
+                            <div class="flex gap-3">
+                                <button @click="openAITutor" class="text-xs font-bold text-indigo-700 bg-white hover:bg-indigo-100 px-4 py-2 rounded-lg border shadow-sm cursor-pointer">
+                                    <i class="fas fa-robot"></i> AI Tutor[cite: 71]
+                                </button>
+                                <span class="text-xs font-bold bg-white px-4 py-2 rounded-lg text-indigo-600 shadow-sm border">
+                                    Memperbaiki {{ retryIndex + 1 }} / {{ wrongMode2Qs.length }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-relaxed mb-6">
+                                <span class="text-rose-500 mr-1">{{ retryQ.originalNumber }}.</span> {{ retryQ.text }}
+                            </h3>
+                            
+                            <div class="space-y-3 mb-6">
+                                <button v-for="(opt, idx) in retryQ.options" :key="idx" 
+                                    @click="checkRetryAnswer(idx)"
+                                    :disabled="retryStatus && retryStatus.isCorrect"
+                                    :class="[
+                                        'w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-4 relative overflow-hidden',
+                                        retryStatus && retryStatus.selected === idx && retryStatus.isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-bold' : '',
+                                        retryStatus && retryStatus.selected === idx && !retryStatus.isCorrect ? 'border-rose-500 bg-rose-50 text-rose-900' : '',
+                                        !retryStatus || retryStatus.selected !== idx ? 'border-slate-200 hover:border-indigo-200 bg-white text-slate-700 cursor-pointer' : ''
+                                    ]">
+                                    <span class="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-full text-xs font-bold border-2 mt-0.5"
+                                        :class="retryStatus && retryStatus.selected === idx && retryStatus.isCorrect ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 text-slate-500'">
+                                        {{ String.fromCharCode(97 + idx) }}.
+                                    </span>
+                                    <span class="pt-0.5 leading-tight">{{ opt }}</span>
+                                </button>
+                            </div>
+
+                            <div v-if="retryStatus" class="p-5 rounded-2xl border shadow-sm" 
+                                :class="retryStatus.isCorrect ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'">
+                                <div class="flex items-start gap-3">
+                                    <i :class="retryStatus.isCorrect ? 'fas fa-star text-emerald-500 text-2xl' : 'fas fa-exclamation-triangle text-rose-500 text-2xl'"></i>
+                                    <div>
+                                        <p class="font-extrabold text-base">{{ retryStatus.isCorrect ? 'Benar Sekali! Analisismu tajam.' : 'Masih kurang tepat, coba analisa petunjuknya!' }}</p>
+                                        <p class="text-sm mt-1 leading-relaxed">{{ retryStatus.hint }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4" v-if="retryStatus && retryStatus.isCorrect">
+                            <button @click="nextRetry" class="bg-indigo-600 text-white font-bold py-4 px-10 rounded-xl shadow-lg cursor-pointer flex items-center gap-2">
+                                {{ retryIndex === wrongMode2Qs.length - 1 ? 'Selesaikan Semua Misi' : 'Lanjut Soal Berikut' }} <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SELESAI -->
+                    <div v-else-if="phase === 'finish'" key="finish" class="flex-1 flex flex-col justify-center items-center text-center py-10 space-y-6">
+                        <div class="w-32 h-32 mx-auto bg-yellow-50 rounded-full flex items-center justify-center text-6xl border-4 border-yellow-200 shadow-xl relative">
+                            🏆
+                            <div class="absolute -bottom-3 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-xl">100% Correct</div>
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-slate-900">Misi Selesai Sempurna!</h2>
+                        <p class="text-slate-600 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
+                            Luar biasa! Kamu telah melalui proses latihan, simulasi berwaktu, evaluasi mandiri, dan <strong>berhasil memperbaiki sendiri</strong> setiap kesalahanmu[cite: 69, 71].
+                        </p>
+                        <button @click="resetApp" class="bg-slate-900 text-white font-bold py-4 px-8 rounded-xl shadow-lg cursor-pointer text-lg">
+                            <i class="fas fa-redo-alt mr-2"></i> Kembali ke Menu Utama
+                        </button>
+                    </div>
+                </transition>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AI TUTOR -->
+    <div id="ai-modal-root" v-cloak>
+        <transition name="fade-pop">
+            <div v-if="showAITutor" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+                <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl flex flex-col h-[85vh] sm:h-[600px] overflow-hidden border border-slate-300 relative">
+                    <div class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-4 flex justify-between items-center shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg">🤖</div>
+                            <div>
+                                <h3 class="font-bold text-sm">AI Tutor Olimpiad Champion[cite: 71]</h3>
+                                <p class="text-[10px] text-indigo-100 opacity-90">Membimbing tanpa menyuapi jawaban[cite: 71]</p>
+                            </div>
+                        </div>
+                        <button @click="closeAITutor" class="text-white hover:bg-white/20 w-8 h-8 rounded-full font-bold cursor-pointer text-xl">&times;</button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 clean-scroll" id="chat-container">
+                        <div v-for="(msg, index) in chatMessages" :key="index" :class="['flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start']">
+                            <div :class="['max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm', msg.role === 'user' ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm']">
+                                <span v-html="formatMessage(msg.text)"></span>
+                            </div>
+                        </div>
+                        <div v-if="isTyping" class="flex w-full justify-start">
+                            <div class="max-w-[85%] p-3 text-sm bg-white border border-slate-200 text-slate-500 rounded-2xl flex gap-1 items-center h-10">
+                                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
+                                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                                <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 bg-white border-t shrink-0">
+                        <form @submit.prevent="sendMessage" class="flex gap-2">
+                            <input type="text" v-model="chatInput" placeholder="Tanyakan petunjuk soal..." class="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" :disabled="isTyping">
+                            <button type="submit" :disabled="isTyping || !chatInput.trim()" class="bg-indigo-600 text-white rounded-xl px-4 font-bold cursor-pointer hover:bg-indigo-700 shadow-md">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </transition>
+    </div>
+
+    <!-- VUE SCRIPT -->
+    <script>
+        const globalStore = Vue.reactive({
+            showAITutor: false,
+            chatMessages: [],
+            chatInput: '',
+            isTyping: false
+        });
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    phase: 'home',
+                    mode2Unlocked: false,
+                    currentMode1Index: 0,
+                    mode1Checked: false,
+                    answersMode1: {},
+                    answersMode2: {},
+                    timer: 120, // 2 Menit timer simulasi[cite: 69, 71]
+                    timerInterval: null,
+                    wrongMode2Qs: [],
+                    reflectionText: '',
+                    retryIndex: 0,
+                    retryStatus: null,
+
+                    // Database Soal 1-4 Sesuai Naskah Asli PDF
+                    questions: [
+                        {
+                            id: 1, mode: 'mode1', originalNumber: 1,
+                            context: "Walt Disney was born with the name Walter Elias Disney on December 5th, 1901 at Chicago's Hermosa Community Area. His father was Elias Charles Disney and his mother was Flora Call Disney. Walt Disney was Irish-Canadian descendant from his father and German-English descendant from his mother.\n\nWalt Disney is well known as co-founder of The Walt Disney Company and as cultural icon that hardly matched by others. He was the animator who created Mickey Mouse and many others Disney famous characters. He was also successful film producer, voice actor, and entrepreneur. His voice acting works were including the original voice of Mickey Mouse. Disneyland and Disney resort were started from his innovation.\n\nWalt Disney was very influential person in entertainment industry, especially Hollywood animation industry. His works in American animation and entertainment industry brought him 59 nominations in Academy Awards that he won 22 of them and 4 honorary Academy Awards. He also won 7 Emmy Awards and much more awards.\n\nWalt Disney died on December 15, 1966 in Burbank, California after long fight with lung cancer, leaving myriad legacy. Many of his legacies are still remembered and enjoyed by people, including hundreds of animated films, theme parks, animation studio, and the company. Cal Arts (California Institute of the Arts) is also the legacy of Walt Disney.",
+                            text: 'Walter Elias Disney was died in the age of ... years old.',
+                            options: ['22', '59', '64', '65'],
+                            correct: 3, // d. 65
+                            theory: "Usia wafat dihitung dengan mengurangkan tahun kematian dengan tahun kelahiran (1966 - 1901 = 65 tahun)."
+                        },
+                        {
+                            id: 2, mode: 'mode1', originalNumber: 7, // Berdasar PDF KEFLEX
+                            context: "Label Keflex",
+                            text: 'Logo Rx found in the label means',
+                            options: [
+                                'The drug is for adults only',
+                                'The drug should be stored under 30°C',
+                                'The drug should not be distributed out of USA',
+                                'The drug could only be dispensed under prescription'
+                            ],
+                            correct: 3, // d
+                            theory: "Logo ℞ (Rx) adalah simbol medis dari bahasa Latin 'recipe' (artinya: ambillah), yang menandakan bahwa obat tersebut hanya dapat ditebus dan diberikan berdasarkan resep dokter (prescription)."
+                        },
+                        {
+                            id: 3, mode: 'mode2', originalNumber: 36, // Berdasar PDF Greedy Dog
+                            context: "Once, there was a dog searching for food. It got a bone from a meat shop. The dog took the bone and went towards its house. It reached at the bridge of the river which was near his house.\n\nThe dog saw his image in the water and mistook that some other dog is there in the water with a bone in its mouth. The greedy dog made a plan to snatch away the bone from the other dog. It opened the mouth for snatching away the bone. Alas! The bone in its mouth fell down in the river.\n\nThe poor dog lost its bone and went home crying.",
+                            text: 'What was actually seen by the dog in the river?',
+                            options: ['Another dog', "It's shadow", 'A juicier bone', "It's reflection"],
+                            correct: 3, // d
+                            theory: "Teks menyebutkan 'The dog saw his image in the water'. Objek yang memantul di permukaan air jernih disebut pantulan (reflection).",
+                            whyWrong: {
+                                0: "Itu hanya asumsi serakah anjing tersebut, bukan wujud nyata.",
+                                1: "Shadow (bayangan) adalah area gelap akibat terhalangnya cahaya, bukan rupa yang memantul di air.",
+                                2: "Tulang tampak sama karena itu adalah pantulannya sendiri."
+                            }
+                        },
+                        {
+                            id: 4, mode: 'mode2', originalNumber: 37, // Berdasar PDF Grammar Tenses
+                            context: null,
+                            text: 'I _______ my keys, could you help me look for them?',
+                            options: ['have lost', 'had lost', 'lose', 'lost'],
+                            correct: 0, // a
+                            theory: "Kejadian kehilangan kunci terjadi di masa lalu dan efeknya masih berlanjut hingga sekarang (ia meminta tolong dicarikan saat ini). Tenses yang tepat adalah Present Perfect Tense (have/has + Verb 3).",
+                            whyWrong: {
+                                1: "Past Perfect (had lost) memerlukan dua kejadian berurutan di masa lampau.",
+                                2: "Simple Present (lose) digunakan untuk kebiasaan rutin.",
+                                3: "Simple Past (lost) menunjukkan kejadian masa lalu yang sudah selesai murni tanpa kaitan penekanan efek di masa kini."
+                            }
+                        }
+                    ]
+                };
+            },
+            computed: {
+                currentQ() { return this.questions.filter(q => q.mode === 'mode1')[this.currentMode1Index]; },
+                mode2Questions() { return this.questions.filter(q => q.mode === 'mode2'); },
+                formattedTimer() {
+                    let m = Math.floor(this.timer / 60).toString().padStart(2, '0');
+                    let s = (this.timer % 60).toString().padStart(2, '0');
+                    return `${m}:${s}`;
+                },
+                retryQ() { return this.wrongMode2Qs[this.retryIndex]; }
+            },
+            methods: {
+                startMode1() {
+                    this.phase = 'mode1';
+                    this.currentMode1Index = 0;
+                    this.mode1Checked = false;
+                    this.answersMode1 = {};
+                },
+                checkMode1() { this.mode1Checked = true; },
+                nextMode1() {
+                    if (this.currentMode1Index < 1) {
+                        this.currentMode1Index++;
+                        this.mode1Checked = false;
+                    } else {
+                        this.mode2Unlocked = true;
+                        this.phase = 'home';
+                    }
+                },
+                startMode2Intro() { this.phase = 'mode2_intro'; },
+                startMode2() {
+                    this.phase = 'mode2';
+                    this.timer = 120; // 2 Menit[cite: 69, 71]
+                    this.answersMode2 = {};
+                    this.timerInterval = setInterval(() => {
+                        if (this.timer > 0) this.timer--;
+                        else this.submitMode2();
+                    }, 1000);
+                },
+                submitMode2() {
+                    clearInterval(this.timerInterval);
+                    this.wrongMode2Qs = this.mode2Questions.filter(q => this.answersMode2[q.id] !== q.correct);
+                    if (this.wrongMode2Qs.length > 0) {
+                        this.reflectionText = '';
+                        this.phase = 'eval';
+                    } else {
+                        this.phase = 'finish';
+                    }
+                },
+                startRetry() {
+                    this.phase = 'retry';
+                    this.retryIndex = 0;
+                    this.retryStatus = null;
+                },
+                checkRetryAnswer(idx) {
+                    if (this.retryStatus && this.retryStatus.isCorrect) return;
+                    let isCorr = (idx === this.retryQ.correct);
+                    let hnt = isCorr ? "Hebat! Analisismu sudah tepat." : (this.retryQ.whyWrong?.[idx] || "Coba perhatikan kembali petunjuk grammar dan konteksnya.");
+                    this.retryStatus = { selected: idx, isCorrect: isCorr, hint: hnt };
+                },
+                nextRetry() {
+                    if (this.retryIndex < this.wrongMode2Qs.length - 1) {
+                        this.retryIndex++;
+                        this.retryStatus = null;
+                    } else {
+                        this.phase = 'finish';
+                    }
+                },
+                resetApp() {
+                    this.phase = 'home';
+                    this.currentMode1Index = 0;
+                    this.mode1Checked = false;
+                    this.answersMode1 = {};
+                    this.answersMode2 = {};
+                    this.wrongMode2Qs = [];
+                    this.retryStatus = null;
+                    clearInterval(this.timerInterval);
+                },
+                openAITutor() {
+                    globalStore.showAITutor = true;
+                    if (globalStore.chatMessages.length === 0) {
+                        globalStore.chatMessages = [{ role: 'model', text: "Halo, Calon Juara! Saya AI Tutor olimpiade-mu[cite: 71]. Ada bagian yang membingungkan?" }];
+                    }
+                }
+            }
+        });
+
+        const modalApp = Vue.createApp({
+            data() { return globalStore; },
+            methods: {
+                closeAITutor() { this.showAITutor = false; },
+                formatMessage(text) { return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); },
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const container = document.getElementById('chat-container');
+                        if (container) container.scrollTop = container.scrollHeight;
+                    });
+                },
+                sendMessage() {
+                    if (!this.chatInput.trim() || this.isTyping) return;
+                    const msg = this.chatInput.trim();
+                    this.chatMessages.push({ role: 'user', text: msg });
+                    this.chatInput = '';
+                    this.isTyping = true;
+                    this.scrollToBottom();
+
+                    setTimeout(() => {
+                        let reply = "Perhatikan kembali teks bacaan atau aturan tensesnya secara teliti ya!";
+                        const lower = msg.toLowerCase();
+                        if (lower.includes('umur') || lower.includes('usia')) {
+                            reply = "Kurangi tahun wafat dengan tahun lahir di teks pertama!";
+                        } else if (lower.includes('rx')) {
+                            reply = "Simbol resep dokter dari bahasa Latin.";
+                        } else if (lower.includes('reflection')) {
+                            reply = "Bayangan di permukaan air disebut pantulan (reflection).";
+                        } else if (lower.includes('lost')) {
+                            reply = "Kejadian masa lalu yang masih berdampak hingga sekarang memakai Present Perfect.";
+                        }
+                        this.chatMessages.push({ role: 'model', text: reply });
+                        this.isTyping = false;
+                        this.scrollToBottom();
+                    }, 1000);
+                }
+            }
+        });
+
+        app.mount('#app');
+        modalApp.mount('#ai-modal-root');
+    </script>
+</body>
+</html>
